@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pemantauan Anggaran BLU – RSUP Fatmawati</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">+</div>
+      <div class="brand-text">
+        <span class="brand-name">RSUP FATMAWATI</span>
+        <span class="brand-sub">BLU</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="dashboard">
+        <span class="nav-icon">⊞</span> Dashboard
+      </a>
+      <a href="#" class="nav-item" data-section="ringkasan">
+        <span class="nav-icon">◈</span> Ringkasan Anggaran
+      </a>
+      <a href="#" class="nav-item" data-section="pendapatan">
+        <span class="nav-icon">↑</span> Pendapatan
+      </a>
+      <a href="#" class="nav-item" data-section="belanja-op">
+        <span class="nav-icon">🛒</span> Belanja Operasional
+      </a>
+      <a href="#" class="nav-item" data-section="belanja-modal">
+        <span class="nav-icon">🏗</span> Belanja Modal
+      </a>
+      <a href="#" class="nav-item" data-section="saldo-kas">
+        <span class="nav-icon">🏦</span> Saldo Kas
+      </a>
+      <a href="#" class="nav-item" data-section="surplus">
+        <span class="nav-icon">📊</span> Surplus / Defisit
+      </a>
+      <a href="#" class="nav-item" data-section="per-unit">
+        <span class="nav-icon">🏢</span> Per Unit Kerja
+      </a>
+      <a href="#" class="nav-item" data-section="transaksi">
+        <span class="nav-icon">📋</span> Detail Transaksi
+      </a>
+      <a href="#" class="nav-item" data-section="laporan">
+        <span class="nav-icon">📄</span> Laporan
+      </a>
+    </nav>
+    <div class="sidebar-info">
+      <div class="info-label">Informasi</div>
+      <div class="info-item">Sumber Data</div>
+      <div class="info-value">Google Sheets</div>
+      <div class="info-item mt-8">Periode Data</div>
+      <div class="info-value" id="info-periode">Januari – Mei 2024</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>DASHBOARD PEMANTAUAN ANGGARAN BLU</h1>
+        <p>RSUP Fatmawati</p>
+      </div>
+      <div class="topbar-controls">
+        <div class="filter-group">
+          <label>Tahun</label>
+          <select id="filter-tahun">
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Bulan</label>
+          <select id="filter-bulan">
+            <option value="1">Januari</option>
+            <option value="2">Februari</option>
+            <option value="3">Maret</option>
+            <option value="4">April</option>
+            <option value="5" selected>Mei</option>
+            <option value="6">Juni</option>
+            <option value="7">Juli</option>
+            <option value="8">Agustus</option>
+            <option value="9">September</option>
+            <option value="10">Oktober</option>
+            <option value="11">November</option>
+            <option value="12">Desember</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Unit</label>
+          <select id="filter-unit">
+            <option value="semua">Semua Unit</option>
+          </select>
+        </div>
+        <div class="topbar-meta">
+          <span class="meta-label">Data diperbarui :</span>
+          <span class="meta-value" id="last-updated">–</span>
+          <button class="btn-refresh" id="btn-refresh" title="Refresh data">↻</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Memuat data dari Google Sheets…</div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area" id="content-area">
+
+      <!-- KPI CARDS ROW -->
+      <section class="kpi-row">
+        <div class="kpi-card kpi-pendapatan">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-blue">📈</div>
+            <span class="kpi-title">PENDAPATAN</span>
+          </div>
+          <div class="kpi-value" id="kpi-pendapatan">2.450,00 M</div>
+          <div class="kpi-sub" id="kpi-pendapatan-target">Target: 2.750,00 M</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="bar-pendapatan" style="width:89.09%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct" id="pct-pendapatan">89,09%</span>
+            <span class="kpi-label">dari target</span>
+            <span class="badge badge-yellow" id="badge-pendapatan">KUNING</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-belanja-op">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-green">🛒</div>
+            <span class="kpi-title">BELANJA OPERASIONAL</span>
+          </div>
+          <div class="kpi-value" id="kpi-belanja-op">1.980,00 M</div>
+          <div class="kpi-sub" id="kpi-belanja-op-pagu">Pagu: 2.200,00 M</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar bar-green" id="bar-belanja-op" style="width:90%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct" id="pct-belanja-op">90,00%</span>
+            <span class="kpi-label">dari pagu</span>
+            <span class="badge badge-green" id="badge-belanja-op">HIJAU</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-belanja-modal">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-purple">🏗</div>
+            <span class="kpi-title">BELANJA MODAL</span>
+          </div>
+          <div class="kpi-value" id="kpi-belanja-modal">250,00 M</div>
+          <div class="kpi-sub" id="kpi-belanja-modal-pagu">Pagu: 400,00 M</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar bar-purple" id="bar-belanja-modal" style="width:62.5%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct" id="pct-belanja-modal">62,50%</span>
+            <span class="kpi-label">dari pagu</span>
+            <span class="badge badge-red" id="badge-belanja-modal">MERAH</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-total-belanja">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-orange">💳</div>
+            <span class="kpi-title">TOTAL BELANJA</span>
+          </div>
+          <div class="kpi-value" id="kpi-total-belanja">2.230,00 M</div>
+          <div class="kpi-sub" id="kpi-total-belanja-pagu">Pagu: 2.600,00 M</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar bar-orange" id="bar-total-belanja" style="width:85.77%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct" id="pct-total-belanja">85,77%</span>
+            <span class="kpi-label">dari pagu</span>
+            <span class="badge badge-yellow" id="badge-total-belanja">KUNING</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-surplus">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-teal">Rp</div>
+            <span class="kpi-title">SURPLUS / (DEFISIT)</span>
+          </div>
+          <div class="kpi-value" id="kpi-surplus">220,00 M</div>
+          <div class="kpi-sub" id="kpi-surplus-proj">Proyeksi Akhir Tahun: 280,00 M</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar bar-teal" id="bar-surplus" style="width:78.57%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct" id="pct-surplus">78,57%</span>
+            <span class="kpi-label">dari proyeksi</span>
+            <span class="badge badge-yellow" id="badge-surplus">KUNING</span>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-saldo">
+          <div class="kpi-header">
+            <div class="kpi-icon icon-navy">🏦</div>
+            <span class="kpi-title">SALDO KAS BLU</span>
+          </div>
+          <div class="kpi-value" id="kpi-saldo">870,00 M</div>
+          <div class="kpi-sub" id="kpi-saldo-date">Per 31 Mei 2024</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar bar-navy" style="width:100%"></div></div>
+          <div class="kpi-footer">
+            <span class="kpi-pct">76 Hari</span>
+            <span class="kpi-label">operasional</span>
+            <span class="badge badge-green" id="badge-saldo">HIJAU</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHARTS ROW 1 -->
+      <section class="charts-row">
+        <!-- Trend Chart -->
+        <div class="chart-card chart-wide">
+          <div class="chart-title">TREND PENDAPATAN VS BELANJA (KUMULATIF)</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="chart-legend">
+            <span class="leg-dot dot-blue"></span> Pendapatan
+            <span class="leg-dot dot-green"></span> Belanja Operasional
+            <span class="leg-dot dot-orange"></span> Total Belanja
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-trend"></canvas>
+          </div>
+        </div>
+
+        <!-- Donut Chart -->
+        <div class="chart-card chart-medium">
+          <div class="chart-title">KOMPOSISI BELANJA OPERASIONAL</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="chart-wrap chart-donut-wrap">
+            <canvas id="chart-donut"></canvas>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+
+        <!-- Bar Chart Realisasi -->
+        <div class="chart-card chart-medium">
+          <div class="chart-title">REALISASI ANGGARAN PER JENIS</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="chart-legend">
+            <span class="leg-dot dot-lightblue"></span> Pagu/Target
+            <span class="leg-dot dot-darkblue"></span> Realisasi
+            <span class="leg-line"></span> % Realisasi
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-realisasi"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHARTS ROW 2 -->
+      <section class="charts-row charts-row-bottom">
+        <!-- Table Per Unit Kerja -->
+        <div class="chart-card table-card">
+          <div class="chart-title">REALISASI ANGGARAN PER UNIT KERJA</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="table-scroll">
+            <table class="data-table" id="table-unit">
+              <thead>
+                <tr>
+                  <th>Unit Kerja</th>
+                  <th>Pagu/Target (M)</th>
+                  <th>Realisasi (M)</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-unit">
+                <tr><td colspan="4" class="table-empty">Memuat data…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Arus Kas -->
+        <div class="chart-card chart-kas">
+          <div class="chart-title">ARUS KAS BLU</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="kas-summary">
+            <div class="kas-box kas-awal">
+              <div class="kas-label">Saldo Awal</div>
+              <div class="kas-val" id="kas-awal">650,00 M</div>
+            </div>
+            <div class="kas-box kas-masuk">
+              <div class="kas-label">Penerimaan</div>
+              <div class="kas-val" id="kas-masuk">2.650,00 M</div>
+            </div>
+            <div class="kas-box kas-keluar">
+              <div class="kas-label">Pengeluaran</div>
+              <div class="kas-val" id="kas-keluar">2.430,00 M</div>
+            </div>
+            <div class="kas-box kas-akhir">
+              <div class="kas-label">Saldo Akhir</div>
+              <div class="kas-val" id="kas-akhir">870,00 M</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-kas"></canvas>
+          </div>
+        </div>
+
+        <!-- Rincian Realisasi Anggaran -->
+        <div class="chart-card table-card table-wide">
+          <div class="chart-title">RINCIAN REALISASI ANGGARAN</div>
+          <div class="chart-subtitle">s/d Mei 2024</div>
+          <div class="table-scroll">
+            <table class="data-table" id="table-rincian">
+              <thead>
+                <tr>
+                  <th>Jenis</th>
+                  <th>Pagu/Target (M)</th>
+                  <th>Realisasi (M)</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-rincian">
+                <tr><td colspan="4" class="table-empty">Memuat data…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PERINGATAN & CATATAN -->
+      <section class="alerts-section">
+        <div class="alerts-title">PERINGATAN &amp; CATATAN</div>
+        <div class="alerts-row" id="alerts-row">
+          <!-- populated by JS -->
+        </div>
+      </section>
+
+      <!-- EXPORT BUTTONS -->
+      <section class="export-section">
+        <button class="btn-export btn-excel" id="btn-export-excel">⬇ Export Excel</button>
+        <button class="btn-export btn-pdf" id="btn-export-pdf">⬇ Export PDF</button>
+      </section>
+
+    </div><!-- /content-area -->
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
